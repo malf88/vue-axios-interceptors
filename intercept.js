@@ -4,16 +4,35 @@ try {
     console.error('Require vue-axios-interceptors after you require Vue.');
 }
 
-window.axios.interceptors.response.use(function (response) {
-    handleResponse(response);
-    
-    return response;
+window.axios.interceptors.request.use(function(request)  {
+    handleRequest(request);
+    return request;
 }, function (error) {
-    handleResponse(error.response);
-        
+    handleRequest(error.response);
+
     return Promise.reject(error);
 });
 
+window.axios.interceptors.response.use(function (response) {
+    handleResponse(response);
+
+    return response;
+}, function (error) {
+    handleResponse(error.response);
+
+    return Promise.reject(error);
+});
+
+
+function handleRequest(request){
+    var categories      = ['informational', 'success', 'redirection', 'client-error', 'server-error'];
+    var status          = request.status;
+    var codes           = statusCodes();
+
+
+    window.intercepted.$emit('request', request);
+    return true;
+}
 function handleResponse(response){
     var categories      = ['informational', 'success', 'redirection', 'client-error', 'server-error'];
     var status          = response.status;
@@ -50,7 +69,7 @@ function handleValidationErrors(response){
     // Attempt to parse Laravel-structured validation errors.
     try {
         let messages = {};
-      
+
         for(var key in response.data.errors){
             messages[key] = response.data.errors[key].join(',');
         }
@@ -66,7 +85,7 @@ function slugify(string){
         .replace(/\s+/g, '-')           // Replace spaces with -
         .replace(/&/g, '-and-')         // Replace & with 'and'
         .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-        .replace(/\-\-+/g, '-'); 
+        .replace(/\-\-+/g, '-');
 }
 
 function statusCodes(){
